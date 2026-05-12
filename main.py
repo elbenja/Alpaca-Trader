@@ -78,7 +78,8 @@ class WealthAdvisorBot:
         self.form4_briefing = None          # Result dict from Form4Analyst.generate_briefing
         self.form4_prep_date = None         # date() the briefing was generated for
         self.first_post_open_done_date = None  # date() the first post-open cycle ran
-        self.performance_brief = None     # Built pre-market, injected into Head Advisor
+        self.performance_brief = None       # Built pre-market, injected into Head Advisor
+        self.performance_prep_date = None   # Date the brief was generated for
 
         logger.info("✅ All advisors initialized")
         logger.info(f"✅ Trading universe: {len(STOCK_UNIVERSE)} stocks")
@@ -151,7 +152,10 @@ class WealthAdvisorBot:
             synced = sync_closed_trades()
             if synced:
                 logger.info(f"   Synced {synced} newly closed trade(s)")
+            else:
+                logger.info("   No newly closed trades to sync")
             self.performance_brief = build_performance_brief(today)
+            self.performance_prep_date = today
             logger.info("   Performance brief ready")
         except Exception as e:
             logger.error(f"❌ Performance prep failed: {e}", exc_info=True)
@@ -282,15 +286,20 @@ class WealthAdvisorBot:
 
         if result.get("status") == "success":
             logger.info(f"✅ Trade executed: {side.upper()} {shares} {symbol}")
-            if opinions:
+            order_id = result.get("order_id")
+            if opinions and order_id:
                 append_performance_entry(
-                    order_id=result["order_id"],
+                    order_id=order_id,
                     symbol=symbol,
                     side=side,
                     qty=shares,
                     entry_price=entry_price,
-                    entry_date=datetime.now().date().isoformat(),
+                    entry_date=datetime.now(self.tz).date().isoformat(),
                     advisor_votes=opinions,
+                )
+            elif opinions:
+                logger.warning(
+                    f"Order placed but order_id missing — skipping performance entry for {symbol}"
                 )
         else:
             logger.error(f"❌ Trade failed: {result.get('reason')}")
@@ -341,7 +350,7 @@ class WealthAdvisorBot:
                         logger.info("🕵️ Catching up Form 4 prep (bot started post-open)")
                         self.run_form4_prep()
 
-                    if self.performance_brief is None:
+                    if self.performance_prep_date != today:
                         self.run_performance_prep()
 
                     # First post-open cycle of the day gets Form 4 injection
