@@ -56,6 +56,7 @@ class HeadAdvisor:
         advisor_opinions: list,
         portfolio_context: dict,
         form4_context: dict = None,
+        performance_brief: str = None,
     ) -> dict:
         """
         Make final trade decision based on all advisor opinions.
@@ -69,12 +70,13 @@ class HeadAdvisor:
               - overall_action (str): Form 4 Analyst's overall recommendation for the day
               - is_force_added (bool): True if this ticker was added to the cycle
                 solely because of a qualifying Form 4 buy (bypassed momentum filter)
+            performance_brief: Optional markdown string summarising recent trade performance
 
         Returns:
             Dict with decision, confidence, shares, stop_loss, take_profit, reasoning
         """
         user_message = self._build_decision_prompt(
-            stock_data, advisor_opinions, portfolio_context, form4_context
+            stock_data, advisor_opinions, portfolio_context, form4_context, performance_brief
         )
 
         try:
@@ -121,6 +123,7 @@ class HeadAdvisor:
         advisor_opinions: list,
         portfolio_context: dict,
         form4_context: dict = None,
+        performance_brief: str = None,
     ) -> str:
         """Build the prompt with all advisor opinions for final decision."""
 
@@ -132,6 +135,10 @@ class HeadAdvisor:
                 f"  Confidence: {opinion['confidence']}%\n"
                 f"  Reasoning: {opinion['reasoning']}\n"
             )
+
+        performance_block = ""
+        if performance_brief:
+            performance_block = f"\n--- Recent Performance Brief ---\n{performance_brief}\n"
 
         form4_block = ""
         if form4_context and (form4_context.get("ticker_note") or form4_context.get("is_force_added")):
@@ -181,7 +188,7 @@ class HeadAdvisor:
 
         return f"""
 TRADE DECISION REQUIRED: {stock_data['symbol']}
-
+{performance_block}
 --- Stock Data ---
 Price: ${price:.2f}
 RSI: {stock_data['rsi']:.1f}

@@ -36,6 +36,8 @@ from advisors.risk_manager import RiskManager
 from advisors.portfolio_strategist import PortfolioStrategist
 from advisors.head_advisor import HeadAdvisor
 from advisors.form4_analyst import Form4Analyst
+from performance_tracker import sync_closed_trades, append_performance_entry
+from performance_brief import build_performance_brief
 
 # Configure logging
 logging.basicConfig(
@@ -76,6 +78,7 @@ class WealthAdvisorBot:
         self.form4_briefing = None          # Result dict from Form4Analyst.generate_briefing
         self.form4_prep_date = None         # date() the briefing was generated for
         self.first_post_open_done_date = None  # date() the first post-open cycle ran
+        self.performance_brief = None     # Built pre-market, injected into Head Advisor
 
         logger.info("✅ All advisors initialized")
         logger.info(f"✅ Trading universe: {len(STOCK_UNIVERSE)} stocks")
@@ -137,6 +140,22 @@ class WealthAdvisorBot:
                 "summary_path": None,
             }
             self.form4_prep_date = today
+
+    def run_performance_prep(self):
+        """Pre-market: sync closed trades from Alpaca and build today's performance brief."""
+        today = datetime.now(self.tz).date()
+        logger.info("=" * 70)
+        logger.info(f"📊 PERFORMANCE PREP — {today.isoformat()}")
+        logger.info("=" * 70)
+        try:
+            synced = sync_closed_trades()
+            if synced:
+                logger.info(f"   Synced {synced} newly closed trade(s)")
+            self.performance_brief = build_performance_brief(today)
+            logger.info("   Performance brief ready")
+        except Exception as e:
+            logger.error(f"❌ Performance prep failed: {e}", exc_info=True)
+            self.performance_brief = None
 
     def run_analysis_cycle(self, inject_form4: bool = False):
         """
@@ -219,15 +238,17 @@ class WealthAdvisorBot:
                 # Head advisor synthesizes
                 logger.info(f"  Head Advisor synthesizing...")
                 decision = self.head_advisor.decide(
-                    candidate, opinions, portfolio_context, form4_context=form4_ctx
+                    candidate, opinions, portfolio_context,
+                    form4_context=form4_ctx,
+                    performance_brief=self.performance_brief,
                 )
 
                 # Execute if approved
                 if decision.get("decision") == "BUY" and decision.get("shares", 0) > 0:
-                    self._execute_decision(decision, candidate)
+                    self._execute_decision(decision, candidate, opinions)
                     decisions_made += 1
                 elif decision.get("decision") == "SELL" and decision.get("shares", 0) > 0:
-                    self._execute_decision(decision, candidate)
+                    self._execute_decision(decision, candidate, opinions)
                     decisions_made += 1
 
             logger.info(f"\n✅ Cycle complete: {decisions_made} trades executed")
@@ -235,7 +256,7 @@ class WealthAdvisorBot:
         except Exception as e:
             logger.error(f"❌ Cycle failed: {e}", exc_info=True)
 
-    def _execute_decision(self, decision: dict, stock_data: dict):
+    def _execute_decision(self, decision: dict, stock_data: dict, opinions: list = None):
         """Execute a trade decision from Head Advisor."""
         symbol = decision.get("symbol")
         side = decision.get("decision", "PASS").lower()
@@ -261,6 +282,16 @@ class WealthAdvisorBot:
 
         if result.get("status") == "success":
             logger.info(f"✅ Trade executed: {side.upper()} {shares} {symbol}")
+            if opinions:
+                append_performance_entry(
+                    order_id=result["order_id"],
+                    symbol=symbol,
+                    side=side,
+                    qty=shares,
+                    entry_price=entry_price,
+                    entry_date=datetime.now().date().isoformat(),
+                    advisor_votes=opinions,
+                )
         else:
             logger.error(f"❌ Trade failed: {result.get('reason')}")
 
@@ -301,6 +332,7 @@ class WealthAdvisorBot:
                 # Pre-market: run Form 4 prep every cycle (regenerates briefing with latest filings)
                 if self.is_pre_market():
                     self.run_form4_prep()
+                    self.run_performance_prep()
 
                 # Market-open cycles
                 if self.should_run():
@@ -308,6 +340,9 @@ class WealthAdvisorBot:
                     if self.form4_prep_date != today:
                         logger.info("🕵️ Catching up Form 4 prep (bot started post-open)")
                         self.run_form4_prep()
+
+                    if self.performance_brief is None:
+                        self.run_performance_prep()
 
                     # First post-open cycle of the day gets Form 4 injection
                     inject_form4 = (self.first_post_open_done_date != today)
