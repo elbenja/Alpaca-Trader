@@ -1,0 +1,157 @@
+[
+  {
+    "order_id": "f25b6334-953c-47b4-925c-e4248d18b0ca",
+    "symbol": "TSLA",
+    "side": "buy",
+    "qty": 91,
+    "entry_price": 434.925,
+    "entry_date": "2026-05-12",
+    "advisor_votes": {
+      "\ud83d\udcc8 Momentum Analyst": {
+        "recommendation": "BUY",
+        "confidence": 85
+      },
+      "\ud83d\udcf0 Sentiment Analyst": {
+        "recommendation": "PASS",
+        "confidence": 65
+      },
+      "\ud83d\udee1\ufe0f Risk Manager": {
+        "recommendation": "BUY",
+        "confidence": 75
+      },
+      "\ud83c\udfd7\ufe0f Portfolio Strategist": {
+        "recommendation": "BUY",
+        "confidence": 85
+      }
+    },
+    "status": "open",
+    "exit_price": null,
+    "exit_date": null,
+    "pnl_pct": null,
+    "outcome": null
+  },
+  {
+    "order_id": "604ae595-60b7-42af-aa51-c6418055c54f",
+    "symbol": "INTC",
+    "side": "buy",
+    "qty": 334,
+    "entry_price": 119.62,
+    "entry_date": "2026-05-12",
+    "advisor_votes": {
+      "\ud83d\udcc8 Momentum Analyst": {
+        "recommendation": "BUY",
+        "confidence": 75
+      },
+      "\ud83d\udcf0 Sentiment Analyst": {
+        "recommendation": "PASS",
+        "confidence": 65
+      },
+      "\ud83d\udee1\ufe0f Risk Manager": {
+        "recommendation": "BUY",
+        "confidence": 85
+      },
+      "\ud83c\udfd7\ufe0f Portfolio Strategist": {
+        "recommendation": "BUY",
+        "confidence": 85
+      }
+    },
+    "status": "open",
+    "exit_price": null,
+    "exit_date": null,
+    "pnl_pct": null,
+    "outcome": null
+  },
+  {
+    "order_id": "50f03588-9c92-4259-b404-92160acf5167",
+    "symbol": "MU",
+    "side": "buy",
+    "qty": 52,
+    "entry_price": 756.44,
+    "entry_date": "2026-05-12",
+    "advisor_votes": {
+      "\ud83d\udcc8 Momentum Analyst": {
+        "recommendation": "BUY",
+        "confidence": 75
+      },
+      "\ud83d\udcf0 Sentiment Analyst": {
+        "recommendation": "BUY",
+        "confidence": 70
+      },
+      "\ud83d\udee1\ufe0f Risk Manager": {
+        "recommendation": "BUY",
+        "confidence": 85
+      },
+      "\ud83c\udfd7\ufe0f Portfolio Strategist": {
+        "recommendation": "PASS",
+        "confidence": 70
+      }
+    },
+    "status": "open",
+    "exit_price": null,
+    "exit_date": null,
+    "pnl_pct": null,
+    "outcome": null
+  },
+  {
+    "order_id": "4e406f32-7570-440b-8ac2-74a1474df966",
+    "symbol": "NVDA",
+    "side": "buy",
+    "qty": 180,
+    "entry_price": 221.28,
+    "entry_date": "2026-05-12",
+    "advisor_votes": {
+      "\ud83d\udcc8 Momentum Analyst": {
+        "recommendation": "BUY",
+        "confidence": 75
+      },
+      "\ud83d\udcf0 Sentiment Analyst": {
+        "recommendation": "PASS",
+        "confidence": 65
+      },
+      "\ud83d\udee1\ufe0f Risk Manager": {
+        "recommendation": "BUY",
+        "confidence": 85
+      },
+      "\ud83c\udfd7\ufe0f Portfolio Strategist": {
+        "recommendation": "BUY",
+        "confidence": 85
+      }
+    },
+    "status": "open",
+    "exit_price": null,
+    "exit_date": null,
+    "pnl_pct": null,
+    "outcome": null
+  },
+  {
+    "order_id": "8aa2217d-20ad-4b2a-89ee-e92d7fe8ba4a",
+    "symbol": "ADP",
+    "side": "buy",
+    "qty": 186,
+    "entry_price": 214.12,
+    "entry_date": "2026-05-12",
+    "advisor_votes": {
+      "\ud83d\udcc8 Momentum Analyst": {
+        "recommendation": "PASS",
+        "confidence": 50
+      },
+      "\ud83d\udcf0 Sentiment Analyst": {
+        "recommendation": "PASS",
+        "confidence": 55
+      },
+      "\ud83d\udee1\ufe0f Risk Manager": {
+        "recommendation": "BUY",
+        "confidence": 85
+      },
+      "\ud83c\udfd7\ufe0f Portfolio Strategist": {
+        "recommendation": "BUY",
+        "confidence": 85
+      }
+    },
+    "status": "open",
+    "exit_price": null,
+    "exit_date": null,
+    "pnl_pct": null,
+    "outcome": null
+  }
+]
