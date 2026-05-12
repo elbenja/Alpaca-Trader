@@ -104,5 +104,110 @@ class TestAppendPerformanceEntry(unittest.TestCase):
             os.unlink(tmp)
 
 
+class TestSyncClosedTrades(unittest.TestCase):
+    def test_returns_zero_when_log_is_empty(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump([], f)
+            tmp = f.name
+        try:
+            with patch("performance_tracker.PERFORMANCE_LOG_FILE", tmp):
+                from performance_tracker import sync_closed_trades
+                result = sync_closed_trades()
+            self.assertEqual(result, 0)
+        finally:
+            os.unlink(tmp)
+
+    def test_does_not_close_entry_when_position_still_open(self):
+        entry = {
+            "order_id": "ord-1", "symbol": "NVDA", "side": "buy",
+            "qty": 5, "entry_price": 450.0, "entry_date": "2026-05-01",
+            "advisor_votes": {}, "status": "open",
+            "exit_price": None, "exit_date": None, "pnl_pct": None, "outcome": None,
+        }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump([entry], f)
+            tmp = f.name
+        try:
+            with patch("performance_tracker.PERFORMANCE_LOG_FILE", tmp), \
+                 patch("performance_tracker.get_positions", return_value=[{"symbol": "NVDA"}]):
+                from performance_tracker import sync_closed_trades, load_performance_log
+                result = sync_closed_trades()
+                log = load_performance_log()
+            self.assertEqual(result, 0)
+            self.assertEqual(log[0]["status"], "open")
+        finally:
+            os.unlink(tmp)
+
+    def test_closes_entry_and_computes_win(self):
+        entry = {
+            "order_id": "ord-2", "symbol": "MSFT", "side": "buy",
+            "qty": 10, "entry_price": 380.0, "entry_date": "2026-04-13",
+            "advisor_votes": {}, "status": "open",
+            "exit_price": None, "exit_date": None, "pnl_pct": None, "outcome": None,
+        }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump([entry], f)
+            tmp = f.name
+        from unittest.mock import MagicMock
+        fill_resp = MagicMock()
+        fill_resp.raise_for_status = MagicMock()
+        fill_resp.json.return_value = [
+            {
+                "symbol": "MSFT", "side": "sell",
+                "price": "399.0",
+                "transaction_time": "2026-04-15T14:00:00Z",
+            }
+        ]
+        try:
+            with patch("performance_tracker.PERFORMANCE_LOG_FILE", tmp), \
+                 patch("performance_tracker.get_positions", return_value=[]), \
+                 patch("performance_tracker.requests.get", return_value=fill_resp):
+                from performance_tracker import sync_closed_trades, load_performance_log
+                result = sync_closed_trades()
+                log = load_performance_log()
+            self.assertEqual(result, 1)
+            closed = log[0]
+            self.assertEqual(closed["status"], "closed")
+            self.assertAlmostEqual(closed["exit_price"], 399.0)
+            self.assertEqual(closed["exit_date"], "2026-04-15")
+            self.assertAlmostEqual(closed["pnl_pct"], 5.0, places=1)
+            self.assertEqual(closed["outcome"], "win")
+        finally:
+            os.unlink(tmp)
+
+    def test_closes_entry_and_computes_loss(self):
+        entry = {
+            "order_id": "ord-3", "symbol": "AMD", "side": "buy",
+            "qty": 8, "entry_price": 200.0, "entry_date": "2026-04-20",
+            "advisor_votes": {}, "status": "open",
+            "exit_price": None, "exit_date": None, "pnl_pct": None, "outcome": None,
+        }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump([entry], f)
+            tmp = f.name
+        from unittest.mock import MagicMock
+        fill_resp = MagicMock()
+        fill_resp.raise_for_status = MagicMock()
+        fill_resp.json.return_value = [
+            {
+                "symbol": "AMD", "side": "sell",
+                "price": "196.0",
+                "transaction_time": "2026-04-21T10:00:00Z",
+            }
+        ]
+        try:
+            with patch("performance_tracker.PERFORMANCE_LOG_FILE", tmp), \
+                 patch("performance_tracker.get_positions", return_value=[]), \
+                 patch("performance_tracker.requests.get", return_value=fill_resp):
+                from performance_tracker import sync_closed_trades, load_performance_log
+                result = sync_closed_trades()
+                log = load_performance_log()
+            self.assertEqual(result, 1)
+            self.assertEqual(log[0]["outcome"], "loss")
+            self.assertAlmostEqual(log[0]["pnl_pct"], -2.0, places=1)
+        finally:
+            os.unlink(tmp)
+
+
 if __name__ == "__main__":
     unittest.main()
