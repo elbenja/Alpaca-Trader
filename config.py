@@ -104,3 +104,5 @@ TIMEZONE = "US/Eastern"
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 SUMMARIES_DIR = os.path.join(OUTPUT_DIR, "summaries")
 TRADES_FILE = os.path.join(OUTPUT_DIR, "trades.json")
+PERFORMANCE_LOG_FILE = os.path.join(OUTPUT_DIR, "performance_log.json")
+PERFORMANCE_BRIEF_CACHE_FILE = os.path.join(OUTPUT_DIR, "performance_brief_cache.json")
